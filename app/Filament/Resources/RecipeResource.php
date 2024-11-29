@@ -35,8 +35,7 @@ class RecipeResource extends Resource
                     ->required(),
 
                 Forms\Components\Textarea::make('instructions')
-                    ->required()
-                    ->rows(8),
+                    ->required(),
 
                 Forms\Components\Repeater::make('ingredients')
                     ->schema([
