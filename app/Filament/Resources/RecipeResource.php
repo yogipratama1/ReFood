@@ -22,6 +22,7 @@ class RecipeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-pencil-square';
 
+
     public static function form(Form $form): Form
     {
         return $form
@@ -35,7 +36,8 @@ class RecipeResource extends Resource
                     ->required(),
 
                 Forms\Components\Textarea::make('instructions')
-                    ->required(),
+                    ->required()
+                    ->rows(8),
 
                 Forms\Components\Repeater::make('ingredients')
                     ->schema([
@@ -52,7 +54,7 @@ class RecipeResource extends Resource
                         Forms\Components\TextInput::make('note')
                             ->label('Note'),
                     ])
-                    ->columns(3)
+                    ->columns(3) // Mengatur jumlah kolom dalam satu baris
                     ->required(),
             ]);
     }
