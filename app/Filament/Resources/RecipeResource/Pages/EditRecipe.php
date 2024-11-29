@@ -26,8 +26,8 @@ class EditRecipe extends EditRecord
         $syncData = collect($ingredients)->mapWithKeys(function ($ingredient) {
             return [
                 $ingredient['ingredient_id'] => [
-                    'quantity' => $ingredient['quantity'] ?? null,
-                    'note' => $ingredient['note'] ?? null,
+                    'quantity' => $ingredient['quantity'],
+                    'note' => $ingredient['note'],
                 ],
             ];
         });

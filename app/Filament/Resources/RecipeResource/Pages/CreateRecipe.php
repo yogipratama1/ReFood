@@ -15,6 +15,7 @@ class CreateRecipe extends CreateRecord
     {
         $ingredients = $this->data['ingredients'] ?? [];
 
+        // Map ingredients for syncing
         $syncData = collect($ingredients)->mapWithKeys(function ($ingredient) {
             return [
                 $ingredient['ingredient_id'] => [
@@ -24,7 +25,7 @@ class CreateRecipe extends CreateRecord
             ];
         });
 
-        // Sync the ingredients with the recipe
+        // Sync ingredients with the pivot table
         $this->record->ingredients()->sync($syncData);
     }
 }

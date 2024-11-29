@@ -36,8 +36,8 @@ class RecipeResource extends Resource
                     ->required(),
 
                 Forms\Components\Textarea::make('instructions')
-                    ->required()
-                    ->rows(8),
+                    ->rows(8)
+                    ->required(),
 
                 Forms\Components\Repeater::make('ingredients')
                     ->schema([
@@ -54,27 +54,25 @@ class RecipeResource extends Resource
                         Forms\Components\TextInput::make('note')
                             ->label('Note'),
                     ])
-                    ->columns(3) // Mengatur jumlah kolom dalam satu baris
-                    ->required(),
+                    ->columns(3)
+                    ->required()
+                    ->hidden(fn($livewire) => $livewire instanceof \App\Filament\Resources\RecipeResource\Pages\CreateRecipe)
+                    ->afterStateHydrated(function ($component, $record) {
+
+                        if ($record) {
+                            $component->state(
+                                $record->ingredients->map(function ($ingredient) {
+                                    return [
+                                        'ingredient_id' => $ingredient->id,
+                                        'quantity' => $ingredient->pivot->quantity,
+                                        'note' => $ingredient->pivot->note,
+                                    ];
+                                })->toArray()
+                            );
+                        }
+                    }),
             ]);
     }
-    protected function afterSave(): void
-    {
-        $ingredients = $this->data['ingredients'] ?? [];
-
-        $syncData = collect($ingredients)->mapWithKeys(function ($ingredient) {
-            return [
-                $ingredient['ingredient_id'] => [
-                    'quantity' => $ingredient['quantity'] ?? null,
-                    'note' => $ingredient['note'] ?? null,
-                ],
-            ];
-        });
-
-        // Sync the ingredients with the recipe
-        $this->$record->ingredients()->sync($syncData);
-    }
-
 
     public static function table(Table $table): Table
     {
@@ -82,7 +80,6 @@ class RecipeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('category.name')->sortable()->label('Category'),
-                Tables\Columns\TextColumn::make('instructions')->limit(50),
 
             ])
             ->filters([
@@ -93,9 +90,9 @@ class RecipeResource extends Resource
                 Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
-                    ->modalHeading('Recipe Details') // Judul modal
-                    ->modalButton('Close') // Tombol modal
-                    ->modalWidth('lg') // Ukuran modal
+                    ->modalHeading('Recipe Details')
+                    ->modalButton('Close')
+                    ->modalWidth('lg')
                     ->modalSubheading('Details of the selected recipe.')
                     ->action(function ($record) {})
                     ->form([
