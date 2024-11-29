@@ -29,7 +29,7 @@ class Ingredient extends Model
 
         static::deleting(function ($record) {
             if ($record->recipeIngredients()->exists()) {
-                // Throw an exception if there are related recipe ingredients
+
                 throw new \Exception('Tidak bisa menghapus bahan. Bahan ini sudah digunakan di resep.');
             }
         });

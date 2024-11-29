@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
 
 class RecipeResource extends Resource
 {
@@ -34,10 +35,10 @@ class RecipeResource extends Resource
                     ->required(),
 
                 Forms\Components\Textarea::make('instructions')
-                    ->required(),
+                    ->required()
+                    ->rows(8),
 
                 Forms\Components\Repeater::make('ingredients')
-                    ->relationship('ingredients') // Ensure this matches the relationship name
                     ->schema([
                         Forms\Components\Select::make('ingredient_id')
                             ->label('Ingredient')
@@ -56,6 +57,23 @@ class RecipeResource extends Resource
                     ->required(),
             ]);
     }
+    protected function afterSave(): void
+    {
+        $ingredients = $this->data['ingredients'] ?? [];
+
+        $syncData = collect($ingredients)->mapWithKeys(function ($ingredient) {
+            return [
+                $ingredient['ingredient_id'] => [
+                    'quantity' => $ingredient['quantity'] ?? null,
+                    'note' => $ingredient['note'] ?? null,
+                ],
+            ];
+        });
+
+        // Sync the ingredients with the recipe
+        $this->$record->ingredients()->sync($syncData);
+    }
+
 
     public static function table(Table $table): Table
     {
@@ -64,13 +82,6 @@ class RecipeResource extends Resource
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('category.name')->sortable()->label('Category'),
                 Tables\Columns\TextColumn::make('instructions')->limit(50),
-                Tables\Columns\TextColumn::make('ingredients')
-                    ->label('Ingredients')
-                    ->formatStateUsing(function ($state, $record) {
-                        return $record->ingredients->map(function ($ingredient) {
-                            return $ingredient->name . ' (' . $ingredient->pivot->quantity . '): ' . $ingredient->pivot->note;
-                        })->implode(', ');
-                    }),
 
             ])
             ->filters([
@@ -78,6 +89,58 @@ class RecipeResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('view')
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading('Recipe Details') // Judul modal
+                    ->modalButton('Close') // Tombol modal
+                    ->modalWidth('lg') // Ukuran modal
+                    ->modalSubheading('Details of the selected recipe.')
+                    ->action(function ($record) {})
+                    ->form([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Name')
+                            ->disabled()
+                            ->default(fn($record) => $record->name),
+
+                        Forms\Components\TextInput::make('category_name')
+                            ->label('Category')
+                            ->disabled()
+                            ->default(fn($record) => $record->category->name),
+
+                        Forms\Components\Textarea::make('instructions')
+                            ->label('Instructions')
+                            ->rows(8)
+                            ->disabled()
+                            ->default(fn($record) => $record->instructions),
+
+                        Forms\Components\Textarea::make('ingredients_text')
+                            ->label('Ingredients')
+                            ->hint('Ingredient Name - Quantity - Note')
+                            ->disabled()
+                            ->afterStateHydrated(function ($component, $record) {
+
+                                if ($record) {
+                                    $component->state(
+                                        $record->ingredients->map(function ($ingredient) {
+                                            return $ingredient->name . ' - ' . $ingredient->pivot->quantity . ' - ' . $ingredient->pivot->note;
+                                        })->implode("\n")
+                                    );
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, $component) {
+
+                                $ingredients = collect(explode("\n", $state))->map(function ($line) {
+                                    [$name, $quantity, $note] = array_map('trim', explode('-', $line, 3));
+                                    return [
+                                        'name' => $name,
+                                        'quantity' => $quantity,
+                                        'note' => $note ?? '',
+                                    ];
+                                });
+                            }),
+
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -36,9 +36,19 @@ class Recipe extends Model
             ];
         });
 
-        // Log the ingredients for debugging
+
         Log::info('Ingredients for Repeater:', $data->toArray());
 
         return $data;
+    }
+    public function getIngredientsForFormAttribute()
+    {
+        return $this->ingredients->map(function ($ingredient) {
+            return [
+                'ingredient_name' => $ingredient->name,
+                'quantity' => $ingredient->pivot->quantity,
+                'note' => $ingredient->pivot->note,
+            ];
+        })->toArray();
     }
 }
