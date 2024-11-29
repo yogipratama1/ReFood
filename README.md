@@ -5,4 +5,5 @@
 <p>Ubah DB_USERNAME dan DB_PASSWORD sesuai dengan server device</p>
 <p>buat database dengan nama restaurant_food</p>
 <p>jalankan **php artisan migrate**</p>
-<p>login ke dashboard using user admin@refood.com , password = password</p>
+<p>jalankan php artisan serve kemudian kunjungi http://localhost:8000/admin/login</p>
+<p>login ke dashboard menggunakan user admin@refood.com , password = password</p>
